@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:motorcity/models/PDICheckItem.dart';
+import 'package:motorcity/models/PDISubmitItem.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:motorcity/models/car.dart';
@@ -33,6 +35,9 @@ class CarsModel with ChangeNotifier {
   final String _acceptTruckRequestURL = "request/accept";
   final String _completeTruckRequestURL = "request/complete";
   final String _cancelTruckRequestURL = "request/cancel";
+  final String _getPdiCheckItems = 'pdi/checks';
+  final String _getPdiCheckTitles = 'pdi/titles';
+  final String _submitPdi = 'submit/pdi';
 
   Map<String, String> _requestHeaders = {
     'Accept': 'application/json',
@@ -42,11 +47,19 @@ class CarsModel with ChangeNotifier {
   List<Car> _inventoryCars = [];
   List<Location> _locations = [];
   List<TruckRequest> _requests = [];
+  List<PDICheckItem> _pdi_items = [];
+  List<PDICheckTitle> _pdi_titles = [];
 
   bool _isAuthenticated = false;
+  static bool _isSales = false;
 
   bool get isAuthenticated {
     return _isAuthenticated;
+  }
+
+  Future<bool> isSales() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool("isSales");
   }
 
   List<Car> get pendingCars {
@@ -65,6 +78,14 @@ class CarsModel with ChangeNotifier {
     return [..._requests];
   }
 
+  List<PDICheckItem> get pdiItems {
+    return [..._pdi_items];
+  }
+
+  List<PDICheckTitle> get pdiTitles {
+    return [..._pdi_titles];
+  }
+
 /////////////////////////////////BackEnd Functions////////////////////////////////
 
   Future<void> loadCars({bool force = false, ignoreEmpty = false}) async {
@@ -75,19 +96,14 @@ class CarsModel with ChangeNotifier {
     try {
       if (selectedURL == null) await initServers();
 
-      if (_requestHeaders['token'] == null ||
-          _requestHeaders['userType'] == null) await initHeaders();
+      if (_requestHeaders['token'] == null || _requestHeaders['userType'] == null) await initHeaders();
       _pendingCars = [];
       String apiURL = selectedURL + _pendingURL;
-      final response = await http
-          .get(apiURL, headers: _requestHeaders)
-          .timeout(Duration(seconds: 2));
+      final response = await http.get(apiURL, headers: _requestHeaders).timeout(Duration(seconds: 2));
       if (response.statusCode == 200) {
         final dynamic decodedJson = json.decode(cleanResponse(response.body));
 
-        if (decodedJson is Map<String, dynamic> &&
-            decodedJson.containsKey("headers") &&
-            decodedJson['headers'] == false) {
+        if (decodedJson is Map<String, dynamic> && decodedJson.containsKey("headers") && decodedJson['headers'] == false) {
           this.logout();
           return;
         }
@@ -120,20 +136,15 @@ class CarsModel with ChangeNotifier {
     }
     try {
       if (selectedURL == null) await initServers();
-      if (_requestHeaders['token'] == null ||
-          _requestHeaders['userType'] == null) await initHeaders();
+      if (_requestHeaders['token'] == null || _requestHeaders['userType'] == null) await initHeaders();
       _inventoryCars = [];
       String apiURL = selectedURL + _inventoryURL;
-      final response = await http
-          .get(apiURL, headers: _requestHeaders)
-          .timeout(Duration(seconds: 2));
+      final response = await http.get(apiURL, headers: _requestHeaders).timeout(Duration(seconds: 2));
       if (response.statusCode == 200) {
         final dynamic decodedJson = json.decode(cleanResponse(response.body));
 
         //Check if User is Authorized
-        if (decodedJson is Map<String, dynamic> &&
-            decodedJson.containsKey("headers") &&
-            decodedJson['headers'] == false) {
+        if (decodedJson is Map<String, dynamic> && decodedJson.containsKey("headers") && decodedJson['headers'] == false) {
           this.logout();
           return;
         }
@@ -163,22 +174,17 @@ class CarsModel with ChangeNotifier {
 
     try {
       if (selectedURL == null) await initServers();
-      if (_requestHeaders['token'] == null ||
-          _requestHeaders['userType'] == null) await initHeaders();
+      if (_requestHeaders['token'] == null || _requestHeaders['userType'] == null) await initHeaders();
       _locations = [];
 
       String apiURL = selectedURL + _locationURL;
 
-      final response = await http
-          .get(apiURL, headers: _requestHeaders)
-          .timeout(Duration(seconds: 2));
+      final response = await http.get(apiURL, headers: _requestHeaders).timeout(Duration(seconds: 2));
       if (response.statusCode == 200) {
         final dynamic decodedJson = json.decode(cleanResponse(response.body));
 
         //Check if User is Authorized
-        if (decodedJson is Map<String, dynamic> &&
-            decodedJson.containsKey("headers") &&
-            decodedJson['headers'] == false) {
+        if (decodedJson is Map<String, dynamic> && decodedJson.containsKey("headers") && decodedJson['headers'] == false) {
           this.logout();
           return false;
         }
@@ -186,8 +192,7 @@ class CarsModel with ChangeNotifier {
         Iterable l = decodedJson;
 
         this._locations = l.map((locJson) {
-          Location loc = Location(
-              id: int.parse(locJson['LOCT_ID']), name: locJson['LOCT_NAME']);
+          Location loc = Location(id: int.parse(locJson['LOCT_ID']), name: locJson['LOCT_NAME']);
           return loc;
         }).toList();
 
@@ -207,24 +212,20 @@ class CarsModel with ChangeNotifier {
     }
     try {
       if (selectedURL == null) await initServers();
-      if (_requestHeaders['token'] == null ||
-          _requestHeaders['userType'] == null) await initHeaders();
+      if (_requestHeaders['token'] == null || _requestHeaders['userType'] == null) await initHeaders();
       _requests = [];
       notifyListeners();
       String apiURL = mgServer + _requestsURL;
-      final response = await http.post(apiURL,
-          headers: _requestHeaders,
-          body: {"DriverID": userID}).timeout(Duration(seconds: 2));
+      final response = await http.post(apiURL, headers: _requestHeaders, body: {"DriverID": userID}).timeout(Duration(seconds: 2));
       if (response.statusCode == 200) {
+        print(response.body);
         final dynamic cleanRequests = cleanResponse(response.body);
         //Check if User is Authorized
-        if (cleanRequests is Map<String, dynamic> &&
-            cleanRequests.containsKey("headers") &&
-            cleanRequests['headers'] == false) {
+        if (cleanRequests is Map<String, dynamic> && cleanRequests.containsKey("headers") && cleanRequests['headers'] == false) {
           this.logout();
           return false;
         }
-         final Iterable decoded = json.decode(cleanRequests);
+        final Iterable decoded = json.decode(cleanRequests);
 
         decoded.forEach((tmp) => _requests.add(TruckRequest.fromJson(tmp)));
         notifyListeners();
@@ -237,27 +238,16 @@ class CarsModel with ChangeNotifier {
     return true;
   }
 
-  Future<bool> moveCar(
-      {driverID, startLoct, endLoct, carID, km, date, comment}) async {
+  Future<bool> moveCar({driverID, startLoct, endLoct, carID, km, date, comment}) async {
     try {
       final response = await http.post(selectedURL + _moveURL,
-          body: {
-            "DriverID": driverID,
-            "startLocation": startLoct,
-            "endLocation": endLoct,
-            "InventoryID": carID,
-            "KMs": km,
-            "Date": date,
-            "Comment": comment
-          },
+          body: {"DriverID": driverID, "startLocation": startLoct, "endLocation": endLoct, "InventoryID": carID, "KMs": km, "Date": date, "Comment": comment},
           headers: _requestHeaders);
       if (response.statusCode == 200) {
         final dynamic decodedJson = jsonDecode(cleanResponse(response.body));
 
         //Check if User is Authorized
-        if (decodedJson is Map<String, dynamic> &&
-            decodedJson.containsKey("headers") &&
-            decodedJson['headers'] == false) {
+        if (decodedJson is Map<String, dynamic> && decodedJson.containsKey("headers") && decodedJson['headers'] == false) {
           this.logout();
           return false;
         }
@@ -277,26 +267,33 @@ class CarsModel with ChangeNotifier {
 
   Future<bool> login({String user, String password}) async {
     try {
-      final response = await http.post(selectedURL + _loginURL,
-          body: {"DRVRName": user, "DRVRPass": password});
+      final response = await http.post(selectedURL + _loginURL, body: {"DRVRName": user, "DRVRPass": password});
       if (response.statusCode == 200) {
         final loginBody = jsonDecode(response.body);
+        print(loginBody);
         var id = loginBody['id'];
         var token = loginBody['token'];
+        var type = loginBody['type'];
+        if (type == "driver")
+          _isSales = false;
+        else
+          _isSales = true;
         if (id != null) {
           SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.clear();
           await prefs.setString("userID", id);
           await prefs.setString("userName", user);
           await prefs.setString("token", token);
-          await prefs.setString("userType", "driver");
-          await prefs.setString(
-              "date", DateTime.now().millisecondsSinceEpoch.toString());
+          await prefs.setString("userType", type);
+          await prefs.setBool("isSales", _isSales);
+          await prefs.setString("date", DateTime.now().millisecondsSinceEpoch.toString());
 
-          initHeaders();
+          await initHeaders();
 
           prefs.setString(_selectedKey, selectedURL);
           userID = id;
           _isAuthenticated = true;
+
           return true;
         } else
           return false;
@@ -318,21 +315,13 @@ class CarsModel with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       String drvrID = prefs.get("userID");
-      if (_requestHeaders['token'] == null ||
-          _requestHeaders['userType'] == null) await initHeaders();
+      if (_requestHeaders['token'] == null || _requestHeaders['userType'] == null) await initHeaders();
       final bodyArr = {"DriverID": drvrID, "RequestID": reqId};
-      final response = await http
-          .post(mgServer + _acceptTruckRequestURL,
-              headers: _requestHeaders, body: bodyArr)
-          .timeout(Duration(seconds: 2));
+      final response = await http.post(mgServer + _acceptTruckRequestURL, headers: _requestHeaders, body: bodyArr).timeout(Duration(seconds: 2));
 
       if (response.statusCode == 200) {
         final serverResponse = json.decode(cleanResponse(response.body));
         if (serverResponse['response'] == true) {
-          ///////////////HNA YA 7AWYAN
-          ///////////////el value el rag3a ml server ha3mlha print 3la weshak
-          print(serverResponse['response']);
-          ///////////////////YRAB TKON FEHEMT
           await this.loadTruckRequests(force: true);
           return true;
         } else
@@ -348,13 +337,9 @@ class CarsModel with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       String drvrID = prefs.get("userID");
-      if (_requestHeaders['token'] == null ||
-          _requestHeaders['userType'] == null) await initHeaders();
+      if (_requestHeaders['token'] == null || _requestHeaders['userType'] == null) await initHeaders();
       final bodyArr = {"DriverID": drvrID, "RequestID": reqId};
-      final response = await http
-          .post(mgServer + _completeTruckRequestURL,
-              headers: _requestHeaders, body: bodyArr)
-          .timeout(Duration(seconds: 2));
+      final response = await http.post(mgServer + _completeTruckRequestURL, headers: _requestHeaders, body: bodyArr).timeout(Duration(seconds: 2));
 
       if (response.statusCode == 200) {
         final serverResponse = json.decode(cleanResponse(response.body));
@@ -375,19 +360,91 @@ class CarsModel with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       String drvrID = prefs.get("userID");
-      if (_requestHeaders['token'] == null ||
-          _requestHeaders['userType'] == null) await initHeaders();
+      if (_requestHeaders['token'] == null || _requestHeaders['userType'] == null) await initHeaders();
       final bodyArr = {"DriverID": drvrID, "RequestID": reqId};
-      final response = await http
-          .post(mgServer + _cancelTruckRequestURL,
-              headers: _requestHeaders, body: bodyArr)
-          .timeout(Duration(seconds: 2));
+      final response = await http.post(mgServer + _cancelTruckRequestURL, headers: _requestHeaders, body: bodyArr).timeout(Duration(seconds: 2));
 
       if (response.statusCode == 200) {
         final serverResponse = json.decode(cleanResponse(response.body));
         if (serverResponse['response'] == true) {
           // FlutterBackgroundLocation.stopLocationService();
           await this.loadTruckRequests(force: true);
+          return true;
+        } else
+          return false;
+      } else
+        return false;
+    } catch (e) {
+      throw HttpException("Can't connect to server");
+    }
+  }
+
+/////////////////////////PDI Functions//////////////////////////////////////////
+
+  Future<void> loadPDIChecks({bool force = true}) async {
+    if ((_pdi_items.length > 0) && !force) {
+      notifyListeners();
+      return;
+    }
+
+    try {
+      if (selectedURL == null) await initServers();
+
+      if (_requestHeaders['token'] == null || _requestHeaders['userType'] == null) await initHeaders();
+
+      _pdi_items = [];
+      _pdi_titles = [];
+
+      String itemsApiURL = selectedURL + _getPdiCheckItems;
+      String titlesApiURL = selectedURL + _getPdiCheckTitles;
+
+      final itemsResponse = await http.get(itemsApiURL, headers: _requestHeaders).timeout(Duration(seconds: 2));
+      if (itemsResponse.statusCode == 200) {
+        final dynamic decodedJson = json.decode(cleanResponse(itemsResponse.body));
+
+        if (decodedJson is Map<String, dynamic> && decodedJson.containsKey("headers") && decodedJson['headers'] == false) {
+          this.logout();
+          return;
+        }
+        Iterable l = decodedJson;
+
+        l.forEach((checkaya) => _pdi_items.add(PDICheckItem.fromJSON(checkaya)));
+      }
+
+      final titlesResponse = await http.get(titlesApiURL, headers: _requestHeaders).timeout(Duration(seconds: 2));
+      if (titlesResponse.statusCode == 200) {
+        final dynamic decodedJson = json.decode(cleanResponse(titlesResponse.body));
+
+        if (decodedJson is Map<String, dynamic> && decodedJson.containsKey("headers") && decodedJson['headers'] == false) {
+          this.logout();
+          return;
+        }
+        Iterable l = decodedJson;
+
+        l.forEach((titleaya) => _pdi_titles.add(PDICheckTitle.fromJSON(titleaya)));
+        notifyListeners();
+      }
+    } catch (e) {
+      print("Exception catched: " + e.toString());
+      notifyListeners();
+      throw HttpException('Can\'t connect to the server!');
+    }
+    return;
+  }
+
+  Future<bool> submitPDI(String carID, int success, List<PDISubmitItem> pdiItems) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String userID = prefs.get("userID");
+      if (_requestHeaders['token'] == null || _requestHeaders['userType'] == null) await initHeaders();
+
+
+      final bodyArr = {"userID": userID, "inventoryID": carID, "success": success.toString(), "items": jsonEncode(pdiItems) };
+      final response = await http.post(selectedURL + _submitPdi, headers: _requestHeaders, body: bodyArr).timeout(Duration(seconds: 2));
+
+      if (response.statusCode == 200) {
+        final serverResponse = json.decode(cleanResponse(response.body));
+        if (serverResponse['result'] == "Success") {
           return true;
         } else
           return false;
@@ -409,9 +466,6 @@ class CarsModel with ChangeNotifier {
 
       final prefs = await SharedPreferences.getInstance();
 
-      // mgServerIP = prefs.getString(_mgKey) ?? "";
-      // peugeotServerIP = prefs.getString(_pgKey) ?? "";
-
       mgServer = "http://" + mgServerIP + "/motorcity/api/";
       peugeotServer = "http://" + peugeotServerIP + "/peugeot/api/";
 
@@ -421,8 +475,7 @@ class CarsModel with ChangeNotifier {
 
   Future<void> initHeaders() async {
     final prefs = await SharedPreferences.getInstance();
-    this._requestHeaders.addAll(
-        {"token": prefs.get("token"), "userType": prefs.get("userType")});
+    this._requestHeaders.addAll({"token": prefs.get("token"), "userType": prefs.get("userType")});
   }
 
   void setServersIP(peugeotIP, mgIP) async {
@@ -457,22 +510,12 @@ class CarsModel with ChangeNotifier {
     selectedURL = mgServer;
     final prefs = await SharedPreferences.getInstance();
     prefs.setString(_selectedKey, selectedURL);
-
-    //_resetAllData(force: true);
   }
 
   void setSelectedServerPeugeot({bool refreshCars = false}) async {
     selectedURL = peugeotServer;
     final prefs = await SharedPreferences.getInstance();
     prefs.setString(_selectedKey, selectedURL);
-
-    //_resetAllData(force: true);
-  }
-
-  Future<void> _resetAllData({force = false}) async {
-    await loadInventory(force: force);
-    await loadLocations(force: force);
-    await loadCars(force: force);
   }
 
   void setUserID(String id) {
@@ -500,8 +543,7 @@ class CarsModel with ChangeNotifier {
         return false;
       }
       int lastLogin = int.parse(date);
-      if (userID != null &&
-          lastLogin > DateTime.now().add(Duration(hours: 12)).millisecond) {
+      if (userID != null && lastLogin > DateTime.now().add(Duration(hours: 12)).millisecond) {
         this.setUserID(userID);
         _isAuthenticated = true;
         return true;

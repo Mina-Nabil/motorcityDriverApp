@@ -73,7 +73,7 @@ class _HomePageState extends State<HomePage> {
           } else {
             // print("Tele3 null");
           }
-          await Future.delayed(Duration(seconds: 3));
+          await Future.delayed(Duration(seconds: 5));
         });
       },
       onDenied: () {

@@ -1,12 +1,33 @@
 import 'package:motorcity/models/truckrequest.dart';
 
 import 'package:flutter/material.dart';
+import 'package:motorcity/providers/cars_model.dart';
 import 'package:motorcity/screens/request_info.dart';
+import 'package:provider/provider.dart';
 
-class RequestItem extends StatelessWidget {
+class RequestItem extends StatefulWidget {
   final TruckRequest req;
 
   RequestItem(this.req);
+
+  @override
+  _RequestItemState createState() => _RequestItemState();
+}
+
+class _RequestItemState extends State<RequestItem> {
+  bool isSales = false;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    Future.delayed(Duration.zero).then((_) async {
+      isSales = await Provider.of<CarsModel>(context).isSales();
+      setState(() {
+        isSales = isSales;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,37 +35,29 @@ class RequestItem extends StatelessWidget {
     print(MediaQuery.of(context).size.height);
     return Card(
         margin: const EdgeInsets.all(5),
-        color: (req.status == '1') ? Colors.green[100] : Colors.white,
+        color: (widget.req.status == '1') ? Colors.green[100] : Colors.white,
         child: FlatButton(
-            onPressed: () => {
-                  // if (req.status == '1')
-                    // RequestDialog(context, req.id).show()
-                    // {
+            onPressed: !(isSales)
+                ? () => {
                       Navigator.of(context).push(MaterialPageRoute(
                         builder: (context) {
                           return RequestInfo(
                             context: context,
-                            req: req,
+                            req: widget.req,
                           );
                         },
                       ))
-                  //   }
-                  // else if (req.status == '2')
-                  //   InProgressDialog(context, req.id).show()
-                },
+                    }
+                : null,
             child: Container(
               width: double.infinity,
-              height: (MediaQuery.of(context).size.height > 800)
-                  ? 260
-                  : MediaQuery.of(context).size.height / 2.5,
+              height: (MediaQuery.of(context).size.height > 800) ? 260 : MediaQuery.of(context).size.height / 2.5,
               padding: const EdgeInsets.all(5),
               child: Row(mainAxisSize: MainAxisSize.max, children: <Widget>[
                 Flexible(
                   flex: 2,
                   fit: FlexFit.loose,
-                  child: Image.asset((req.status == '1')
-                      ? "assets/new.png"
-                      : "assets/in-progress.png"),
+                  child: Image.asset((widget.req.status == '1') ? "assets/new.png" : "assets/in-progress.png"),
                 ),
                 Flexible(
                   flex: 8,
@@ -63,10 +76,7 @@ class RequestItem extends StatelessWidget {
                               child: Container(
                                 alignment: Alignment.centerLeft,
                                 padding: EdgeInsets.only(left: 15),
-                                child: Text('Request #${req.id}',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold)),
+                                child: Text('Request #${widget.req.id}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                               )),
                           Flexible(
                             fit: FlexFit.loose,
@@ -74,12 +84,9 @@ class RequestItem extends StatelessWidget {
                             child: Container(
                               alignment: Alignment.topRight,
                               child: Text(
-                                'since ${req.reqDate}',
+                                'since ${widget.req.reqDate}',
                                 textAlign: TextAlign.right,
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.black87,
-                                    fontStyle: FontStyle.italic),
+                                style: TextStyle(fontSize: 12, color: Colors.black87, fontStyle: FontStyle.italic),
                               ),
                             ),
                           )
@@ -92,26 +99,21 @@ class RequestItem extends StatelessWidget {
                               padding: EdgeInsets.only(top: 5, left: 15),
                               child: Row(
                                 mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: <Widget>[
                                   Flexible(
                                     fit: FlexFit.loose,
                                     flex: 3,
                                     child: Text(
                                       'From',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: textFont),
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: textFont),
                                       textAlign: TextAlign.left,
                                     ),
                                   ),
                                   Flexible(
                                       fit: FlexFit.loose,
                                       flex: 7,
-                                      child: Text('${req.from}',
-                                          style: TextStyle(fontSize: textFont),
-                                          textAlign: TextAlign.center))
+                                      child: Text('${widget.req.from}', style: TextStyle(fontSize: textFont), textAlign: TextAlign.center))
                                 ],
                               ))),
                       Flexible(
@@ -128,16 +130,14 @@ class RequestItem extends StatelessWidget {
                                   flex: 3,
                                   child: Text(
                                     'To',
-                                    style: TextStyle(
-                                        fontSize: textFont,
-                                        fontWeight: FontWeight.bold),
+                                    style: TextStyle(fontSize: textFont, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 Flexible(
                                     fit: FlexFit.loose,
                                     flex: 7,
                                     child: Text(
-                                      ' ${req.to}',
+                                      ' ${widget.req.to}',
                                       style: TextStyle(fontSize: textFont),
                                       textAlign: TextAlign.end,
                                     ))
@@ -158,16 +158,14 @@ class RequestItem extends StatelessWidget {
                                   flex: 3,
                                   child: Text(
                                     'Driver',
-                                    style: TextStyle(
-                                        fontSize: textFont,
-                                        fontWeight: FontWeight.bold),
+                                    style: TextStyle(fontSize: textFont, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 Flexible(
                                     fit: FlexFit.loose,
                                     flex: 7,
                                     child: Text(
-                                      ' ${req.driverName}',
+                                      ' ${widget.req.driverName}',
                                       style: TextStyle(fontSize: textFont),
                                       textAlign: TextAlign.end,
                                     ))
@@ -179,67 +177,53 @@ class RequestItem extends StatelessWidget {
                           flex: 5,
                           child: Container(
                               padding: EdgeInsets.only(left: 15, top: 5),
-                              child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: <Widget>[
-                                    Flexible(
-                                        fit: FlexFit.loose,
-                                        flex: 3,
-                                        child: Text(
-                                          "Model",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: textFont),
-                                        )),
-                                    Flexible(
-                                        fit: FlexFit.loose,
-                                        flex: 7,
-                                        child: Text(
-                                          '${req.model}',
-                                          textAlign: TextAlign.end,
-                                          style: TextStyle(fontSize: textFont),
-                                        ))
-                                  ]))),
+                              child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+                                Flexible(
+                                    fit: FlexFit.loose,
+                                    flex: 3,
+                                    child: Text(
+                                      "Model",
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: textFont),
+                                    )),
+                                Flexible(
+                                    fit: FlexFit.loose,
+                                    flex: 7,
+                                    child: Text(
+                                      '${widget.req.model}',
+                                      textAlign: TextAlign.end,
+                                      style: TextStyle(fontSize: textFont),
+                                    ))
+                              ]))),
                       Flexible(
                           fit: FlexFit.loose,
                           flex: 5,
                           child: Container(
                               padding: EdgeInsets.only(left: 15, top: 5),
-                              child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: <Widget>[
-                                    Flexible(
-                                        fit: FlexFit.loose,
-                                        flex: 3,
-                                        child: Text(
-                                          "Chassis",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: textFont),
-                                        )),
-                                    Flexible(
-                                        fit: FlexFit.loose,
-                                        flex: 7,
-                                        child: Text(
-                                          '${req.chassis}',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(fontSize: textFont),
-                                        ))
-                                  ]))),
+                              child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+                                Flexible(
+                                    fit: FlexFit.loose,
+                                    flex: 3,
+                                    child: Text(
+                                      "Chassis",
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: textFont),
+                                    )),
+                                Flexible(
+                                    fit: FlexFit.loose,
+                                    flex: 7,
+                                    child: Text(
+                                      '${widget.req.chassis}',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontSize: textFont),
+                                    ))
+                              ]))),
                       Flexible(
                           fit: FlexFit.loose,
                           flex: 8,
                           child: Container(
                             padding: EdgeInsets.only(left: 15, top: 5),
                             child: Text(
-                              '${req.comment}',
-                              style: TextStyle(
-                                  fontStyle: FontStyle.italic,
-                                  fontSize: textFont),
+                              '${widget.req.comment}',
+                              style: TextStyle(fontStyle: FontStyle.italic, fontSize: textFont),
                             ),
                           ))
                     ],

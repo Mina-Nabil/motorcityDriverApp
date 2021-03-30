@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:material_search/material_search.dart";
+import 'package:motorcity/screens/car.dart';
 import 'package:motorcity/screens/move.dart';
 import "package:provider/provider.dart";
 import "package:motorcity/providers/cars_model.dart";
@@ -55,7 +56,7 @@ class _SearchCarsState extends State<SearchCars> {
             builder: (context) {
               int id = int.parse(value.split('%')[0]);
               Car tmp = carsModel.getCarById(id.toString());
-              return MovePage(car: tmp);
+              return CarScreen(tmp);
             },
           )),
         ),

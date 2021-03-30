@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:motorcity/models/car.dart';
+import 'package:motorcity/screens/car.dart';
 import 'package:motorcity/screens/move.dart';
 
 class CarItem extends StatelessWidget {
@@ -27,7 +28,7 @@ class CarItem extends StatelessWidget {
         child: FlatButton(
             onPressed: () {
               Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => MovePage(car: car)));
+                  MaterialPageRoute(builder: (context) => CarScreen(car)));
             },
             child: Container(
                 width: double.infinity,
