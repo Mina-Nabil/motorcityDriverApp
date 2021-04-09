@@ -99,7 +99,7 @@ class _PDIScreenState extends State<PDIScreen> {
                 RaisedButton(
                   color: Colors.blue,
                   child: Text("Submit", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                  onPressed: (isSales || !submitting) ? submitForm : null,
+                  onPressed: (isSales && !submitting) ? submitForm : null,
                 )
               ],
             ))));

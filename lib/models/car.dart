@@ -10,8 +10,9 @@ class Car {
   final String model;
   final String colorCode;
   String imageURL;
+  final String pdiCode;
 
-  Car({this.id, this.chassis, this.color, this.date, this.location, this.brand, this.model, this.colorCode, this.loctID}){
+  Car({this.id, this.chassis, this.color, this.date, this.location, this.brand, this.model, this.colorCode, this.loctID, this.pdiCode}){
     if(brand=='Peugeot'){
       imageURL = "assets/peugeot.png";
     } else if (brand=='MG'){
@@ -26,6 +27,7 @@ class Car {
     this.loctID = json['INVT_LOCT_ID'],
     this.location = json['LOCT_NAME'],
     this.brand    = json['BRND_NAME'],
+    this.pdiCode  = json['PDIC_SCCS'],
     this.colorCode = json['INVT_COLR_CODE'],
     this.model = json['MODL_NAME'] + ' ' + json['MODL_CATG'] + ' ' + json['MODL_YEAR']{
 

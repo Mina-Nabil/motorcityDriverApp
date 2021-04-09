@@ -21,40 +21,45 @@ class CarItem extends StatelessWidget {
     year = int.parse(car.date.split('-')[2]);
 
     return Card(
-        color: (DateTime(year, month, day)
-                    .compareTo(DateTime(now.year, now.month, now.day)) <= 0 )
-            ? Colors.red[100]
-            : Colors.white,
+        color:
+            (DateTime(year, month, day).compareTo(DateTime(now.year, now.month, now.day)) <= 0) ? Colors.red[100] : Colors.white,
         child: FlatButton(
             onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => CarScreen(car)));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => CarScreen(car)));
             },
             child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(5),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Flexible(
-                      flex: 1,
-                      fit: FlexFit.loose,
-                      child: Container(
-                          child: Image.asset(car.imageURL))), //BrandImage
+                  Flexible(flex: 1, fit: FlexFit.loose, child: Container(child: Image.asset(car.imageURL))), //BrandImage
 
                   Flexible(
                       flex: 3,
                       child: Column(mainAxisSize: MainAxisSize.min, children: [
                         ListTile(
-                          title: Text(
-                            car.chassis,
-                            textAlign: TextAlign.left,
-                            style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 18),
+                          trailing: (car.pdiCode == "1")
+                              ? Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                  size: 20,
+                                )
+                              : (car.pdiCode == "0")
+                                  ? Icon(
+                                      Icons.warning,
+                                      color: Colors.yellow,
+                                      size: 20,
+                                    )
+                                  : SizedBox(),
+                          title: FittedBox(
+                            child: Text(
+                              car.chassis,
+                              textAlign: TextAlign.left,
+                              style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 17),
+                            ),
                           ),
                           subtitle: Text(
                             car.model + '-' + car.color + '/' + car.colorCode,
-                            style: TextStyle(fontSize: 16),
+                            style: TextStyle(fontSize: 15),
                           ),
                         ),
                         Divider(),
@@ -62,13 +67,9 @@ class CarItem extends StatelessWidget {
                           title: Text(
                             car.location,
                             textAlign: TextAlign.left,
-                            style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 18),
+                            style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 17),
                           ),
-                          subtitle: Text("Date: " + car.date,
-                              style: TextStyle(fontSize: 16)),
+                          subtitle: Text("Date: " + car.date, style: TextStyle(fontSize: 16)),
                         )
                       ]))
                 ]))));
