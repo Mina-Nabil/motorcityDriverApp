@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -15,7 +16,7 @@ class FirebaseNotifications {
   void setUpFirebase(BuildContext context) {
     this.context = context;
     flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
-    var initializationSettingsAndroid = new AndroidInitializationSettings('@drawable/logo');
+    var initializationSettingsAndroid = new AndroidInitializationSettings('motorcitylogo2');
     var initializationSettingsIOS = IOSInitializationSettings();
     var initializationSettings = InitializationSettings(android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
     flutterLocalNotificationsPlugin.initialize(
@@ -26,10 +27,11 @@ class FirebaseNotifications {
   }
 
   Future _showNotificationWithDefaultSound(String title, String message) async {
-    var androidPlatformChannelSpecifics =
-        AndroidNotificationDetails('app.msquare', 'motorcity', 'motorcity', importance: Importance.high, priority: Priority.high, ticker: 'ticker');
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails('app.msquare', 'motorcity', 'motorcity',
+        importance: Importance.high, priority: Priority.high, ticker: 'ticker');
     var iOSPlatformChannelSpecifics = IOSNotificationDetails();
-    var platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics, iOS: iOSPlatformChannelSpecifics);
+    var platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics, iOS: iOSPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
       0,
       '$title',
@@ -40,6 +42,7 @@ class FirebaseNotifications {
   }
 
   void firebaseCloudMessagingListeners() {
+
     if (Platform.isIOS) iOS_Permission();
 
     _firebaseMessaging.getToken().then((token) {

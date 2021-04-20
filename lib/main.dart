@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+
 import './models/notification_handler.dart';
 import 'package:motorcity/screens/login.dart';
 import 'package:provider/provider.dart';
@@ -11,8 +13,7 @@ Future<void> main() async {
     create: (context) => CarsModel(),
     child: MotorCityApp(),
   ));
-  PermissionStatus permission =
-      await LocationPermissions().requestPermissions();
+  PermissionStatus permission = await LocationPermissions().requestPermissions();
 
   if (permission != PermissionStatus.granted) {
     ///error
@@ -27,6 +28,9 @@ class MotorCityApp extends StatefulWidget {
 }
 
 class _MotorCityAppState extends State<MotorCityApp> {
+  // Create the initialization Future outside of `build`:
+  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+
   @override
   void initState() {
     super.initState();
@@ -34,19 +38,29 @@ class _MotorCityAppState extends State<MotorCityApp> {
   }
 
   Widget build(BuildContext context) {
-    return MaterialApp(
-        initialRoute: '/',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          fontFamily: 'NotoSerif',
-          primaryColor: Color.fromRGBO(0, 46, 72, 1),
-          accentColor: Color.fromRGBO(0, 46, 72, 0.5),
-        ),
-        routes: {
-          '/login': (context) => LoginPage(),
-          '/home': (context) => HomePage()
-        },
-        home: LandingPage());
+    return FutureBuilder(
+      future: _initialization,
+      builder: (context, snapshot) {
+        // Once complete, show your application
+        if (snapshot.connectionState == ConnectionState.done) {
+          return MaterialApp(
+              initialRoute: '/',
+              debugShowCheckedModeBanner: false,
+              theme: ThemeData(
+                fontFamily: 'NotoSerif',
+                primaryColor: Color.fromRGBO(0, 46, 72, 1),
+                accentColor: Color.fromRGBO(0, 46, 72, 0.5),
+              ),
+              routes: {'/login': (context) => LoginPage(), '/home': (context) => HomePage()},
+              home: LandingPage());
+        }
+        return Container(
+            color: Colors.white,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ));
+      },
+    );
   }
 }
 
