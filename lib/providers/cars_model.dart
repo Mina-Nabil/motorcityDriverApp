@@ -270,7 +270,7 @@ class CarsModel with ChangeNotifier {
       final response = await http.post(selectedURL + _loginURL, body: {"DRVRName": user, "DRVRPass": password});
       if (response.statusCode == 200) {
         final loginBody = jsonDecode(response.body);
-        print(loginBody);
+        print(loginBody["id"]);
         var id = loginBody['id'];
         var token = loginBody['token'];
         var type = loginBody['type'];

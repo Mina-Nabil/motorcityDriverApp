@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:background_location/background_location.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -67,6 +68,7 @@ class _HomePageState extends State<HomePage> {
 
         BackgroundLocation.getLocationUpdates((location) async {
           //  print("${location.latitude}  , ${location.longitude}"  );
+          print(location);
           if (location != null) {
             dbrLat.set(location.latitude);
             dbrLng.set(location.longitude);
